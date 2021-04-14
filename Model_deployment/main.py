@@ -5,6 +5,9 @@ from PIL import Image, ImageTk
 import time
 from keras.models import model_from_json
 import numpy as np
+from tensorflow import keras
+from keras.models import load_model
+
 
 
 #Set up GUI
@@ -34,14 +37,8 @@ video = cv2.VideoCapture(0)
 upper_left = (350, 50)
 bottom_right = (600, 350)
 
-# load the model
-json_file = open('model.json', 'r')
-model_json = json_file.read()
-json_file.close()
-model = model_from_json(model_json)
-model.load_weights("model_weights_1.h5")
-
-pred_list = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y']
+model = keras.models.load_model('D:/Grad/CSCE 5214 Soft dev for AI/ASL_recognition-1/ASL_dataset_Model weights/ASL_model.h5')
+pred_list = ['A','B','C','D','del','E','F','G','H','I','J','K','L','M','N','nothing','O','P','Q','R','S','space','T','U','V','W','X','Y','Z']
 
 def gray_live_video():
     static_back = None
@@ -52,7 +49,7 @@ def gray_live_video():
         ROI = frame[50:350,350:600]
         r = cv2.rectangle(frame, upper_left, bottom_right, (100, 50, 200), 1)
         gray = cv2.cvtColor(ROI, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (21, 21), 0)
+        gray = cv2.GaussianBlur(gray, (5, 5), 0)
         
         if static_back is None: 
             static_back = gray 
@@ -60,29 +57,35 @@ def gray_live_video():
 
         diff_ROI = cv2.absdiff(static_back, gray) 
 
-        thresh_ROI = cv2.threshold(diff_ROI, 15, 255, cv2.THRESH_BINARY)[1] 
-        thresh_ROI = cv2.dilate(thresh_ROI, None, iterations = 2) 
+        # thresh_ROI = cv2.threshold(diff_ROI, 15, 255, cv2.THRESH_BINARY)[1] 
+        # thresh_ROI = cv2.dilate(thresh_ROI, None, iterations = 2) 
 
-        cnts,_ = cv2.findContours(thresh_ROI.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        thresh_ROI= cv2.threshold(diff_ROI, 45, 255, cv2.THRESH_BINARY)[1]
+        thresh_ROI= cv2.erode(thresh_ROI, None, iterations=2)
+        thresh_ROI= cv2.dilate(thresh_ROI, None, iterations=2)
+
+        cnts,_ = cv2.findContours(thresh_ROI.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        cv2.imshow("fa",thresh_ROI)
         
         for contour in cnts: 
-            if cv2.contourArea(contour) < 10000: 
-                continue
             # make rectangle arround the moving object
             #(x, y, w, h) = cv2.boundingRect(contour)  
             #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            time.sleep(0.2)
-
+            
             #save image
-            gray = cv2.cvtColor(ROI, cv2.COLOR_BGR2GRAY)
-            resized = cv2.resize(gray, (28,28), interpolation = cv2.INTER_CUBIC)
+            ROI = cv2.cvtColor(ROI, cv2.COLOR_BGR2RGB)
+            cv2.imshow("output",ROI)
+            resized = cv2.resize(ROI, (28,28), interpolation = cv2.INTER_CUBIC)
             #cv2.imwrite("Output.png",resized)
 
             # predict the model
-            keras_model= model.predict(resized[np.newaxis, :, :, np.newaxis])
-            pred = np.argmax(keras_model)
-            print(pred_list[pred+1])
-            tk.Label(window,text=pred_list[pred+1],font=(None, 30)).grid(row=3,column=0)
+            imgs = resized.reshape(-1,28,28,3)
+            imgs = np.array(imgs)
+            imgs = imgs.astype('float32')/255.0
+            pred = model.predict_classes(imgs)
+            print(pred_list[pred[0]])
+
+            tk.Label(window,text=pred_list[pred[0]],font=(None, 30)).grid(row=3,column=0)
           
         return frame
 
