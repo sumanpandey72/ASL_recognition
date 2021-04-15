@@ -47,6 +47,7 @@ def gray_live_video():
         frame = cv2.flip(frame, 1)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         ROI = frame[50:350,350:600]
+        ROI = cv2.flip(ROI,1)
         r = cv2.rectangle(frame, upper_left, bottom_right, (100, 50, 200), 1)
         gray = cv2.cvtColor(ROI, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -68,15 +69,10 @@ def gray_live_video():
         cv2.imshow("fa",thresh_ROI)
         
         for contour in cnts: 
-            # make rectangle arround the moving object
-            #(x, y, w, h) = cv2.boundingRect(contour)  
-            #cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            
-            #save image
             ROI = cv2.cvtColor(ROI, cv2.COLOR_BGR2RGB)
             cv2.imshow("output",ROI)
             resized = cv2.resize(ROI, (28,28), interpolation = cv2.INTER_CUBIC)
-            #cv2.imwrite("Output.png",resized)
+            cv2.imwrite("Output.jpg",ROI)
 
             # predict the model
             imgs = resized.reshape(-1,28,28,3)
