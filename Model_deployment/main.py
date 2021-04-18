@@ -7,7 +7,8 @@ from keras.models import model_from_json
 import numpy as np
 from tensorflow import keras
 from keras.models import load_model
-
+import random
+from random import randrange
 
 
 #Set up GUI
@@ -38,8 +39,10 @@ video = cv2.VideoCapture(0)
 upper_left = (350, 50)
 bottom_right = (650, 350)
 
-model = keras.models.load_model('D:/Grad/CSCE 5214 Soft dev for AI/ASL_recognition-1/ASL_dataset_Model weights/ASL_Model_Weights.h5')
+model = keras.models.load_model('ASL_dataset_Model weights/ASL_Model_Weights.h5')
 pred_list = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z']
+
+randomletter = pred_list[randrange(23)]
 
 def gray_live_video():
     static_back = None
@@ -50,7 +53,7 @@ def gray_live_video():
         frame = cv2.flip(frame, 1)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         ROI = frame[50:350,350:650]
-        ROI = cv2.flip(ROI,1)
+        #ROI = cv2.flip(ROI,1)
         ROI = cv2.cvtColor(ROI, cv2.COLOR_BGR2RGB)
         r = cv2.rectangle(frame, upper_left, bottom_right, (100, 50, 200), 1)
         gray = cv2.cvtColor(ROI, cv2.COLOR_BGR2GRAY)
@@ -90,6 +93,12 @@ def gray_live_video():
             pred = model.predict_classes(imgs)
             #print(pred_list[pred[0]])
             tk.Label(window,text=pred_list[pred[0]],font=(None, 30)).grid(row=3,column=0)
+
+            if pred_list[pred[0]] == randomletter:
+                tk.Label(window,text="Correct",font=(None, 10)).grid(row=6,column=0)
+            else:
+                tk.Label(window,text="Incorrect",font=(None, 10)).grid(row=6,column=0)
+
           
         return frame
 
@@ -101,10 +110,18 @@ def show_frame():
     lmain.configure(image=imgtk)
     lmain.after(10, show_frame)  
 
+def help():
+    messagebox.showinfo("showinfo","help")
 
-tk.Label(window,text="Sign Language Recognition",font=(None, 40)).grid(row=0,column=0)
-tk.Label(window,text="English Alphabet",font=(None, 30)).grid(row=2,column=0)
-tk.Label(window,text="Model trained using MNIST dataset",font=(None, 10)).grid(row=4,column=0)
+testing = f"Please hold up a {randomletter}"
+
+#tk.Label(window,text="Sign Language Recognition",font=(None, 40)).grid(row=0,column=0)
+tk.Label(window,text=testing,font=(None, 40)).grid(row=0,column=0)
+
+tk.Label(window,text="English Alphabet",font=(None, 30)).grid(row=4,column=0)
+tk.Label(window,text="Model trained using MNIST dataset",font=(None, 10)).grid(row=5,column=0)
+
+tk.Button(window, text="HELP", command=help).grid(row=7,column=0)
 
 show_frame() 
 #canvas.pack()
